@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .prediction-form {
+        background-color: white;
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .upload-area {
+        border: 2px dashed #adb5bd;
+        border-radius: 5px;
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+    }
+    
+    .upload-area:hover {
+        border-color: #17a2b8;
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    .result-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .result-image {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+    }
+    
+    .result-details {
+        padding: 1.5rem;
+    }
+    
+    .nutrition-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .nutrition-value {
+        font-weight: bold;
+    }
+    
+    .history-title {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #17a2b8;
+    }
+    
+    .history-card {
+        display: flex;
+        margin-bottom: 1rem;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .history-image {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+    }
+    
+    .history-details {
+        padding: 1rem;
+        flex: 1;
+    }
+    
+    .history-food-name {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .history-nutrition {
+        display: flex;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .history-nutrition span {
+        margin-right: 1rem;
+    }
+    
+    .file-input-wrapper {
+        margin-top: 20px;
+    }
+    
+    .custom-file-input {
+        color: transparent;
+        width: 100%;
+    }
+    
+    .custom-file-input::-webkit-file-upload-button {
+        visibility: hidden;
+    }
+    
+    .custom-file-input::before {
+        content: 'Choose a file';
+        color: white;
+        display: inline-block;
+        background: #17a2b8;
+        border-radius: 3px;
+        padding: 8px 12px;
+        outline: none;
+        white-space: nowrap;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    
+    .custom-file-input:hover::before {
+        background: #138496;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-5">
+        <div class="col-12">
+            <h1 class="text-center mb-4">Food Calorie Prediction</h1>
+            <div class="prediction-form">
+                <form id="predictionForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="text-center mb-4">
+                        <h4>Upload Your Food Image</h4>
+                        <p class="text-muted">We'll analyze your food and provide nutritional information</p>
+                    </div>
+                    
+                    <!-- Direct file input -->
+                    <div class="mb-3">
+                        <label for="food_image" class="form-label">Select Food Image:</label>
+                        <input type="file" class="form-control" id="food_image" name="food_image" accept="image/*">
+                    </div>
+                    
+                    <!-- Alternative upload area -->
+                    <div class="upload-area mb-4" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <h5>Drag & Drop or Click to Upload</h5>
+                        <p class="text-muted">Upload a food image to predict calories</p>
+                    </div>
+                    
+                    <div id="fileInfo" class="mb-3 text-center" style="display: none;">
+                        <span id="fileName"></span>
+                        <button type="button" class="btn btn-sm btn-danger ms-2" id="removeFile">Remove</button>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Upload & Predict</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Prediction Result (Initially Hidden) -->
+    <div class="row mb-5" id="resultSection" style="display: none;">
+        <div class="col-md-8 mx-auto">
+            <div class="result-card">
+                <img id="resultImage" src="" alt="Food Image" class="result-image">
+                <div class="result-details">
+                    <h3 id="foodName" class="mb-4">Food Name</h3>
+                    <div class="nutrition-item">
+                        <span>Calories:</span>
+                        <span id="calories" class="nutrition-value">0 kcal</span>
+                    </div>
+                    <div class="nutrition-item">
+                        <span>Fat:</span>
+                        <span id="fat" class="nutrition-value">0 g</span>
+                    </div>
+                    <div class="nutrition-item">
+                        <span>Energy:</span>
+                        <span id="energy" class="nutrition-value">0 kJ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Previous Predictions -->
+    {% if predictions %}
+    <div class="row">
+        <div class="col-12">
+            <h2 class="history-title">Recent Predictions</h2>
+        </div>
+        {% for prediction in predictions %}
+        <div class="col-md-6">
+            <div class="history-card">
+                <img src="{{ prediction.image.url }}" alt="{{ prediction.food_name }}" class="history-image">
+                <div class="history-details">
+                    <div class="history-food-name">{{ prediction.food_name }}</div>
+                    <div class="history-nutrition">
+                        <span>Calories: {{ prediction.calories }} kcal</span>
+                        <span>Fat: {{ prediction.fat }} g</span>
+                        <span>Energy: {{ prediction.energy }} kJ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<script>
+    $(document).ready(function() {
+        // Handle the file upload area click
+        $('#uploadArea').click(function() {
+            $('#food_image').click();
+        });
+        
+        // Display file name when selected
+        $('#food_image').change(function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                $('#fileName').text(file.name);
+                $('#fileInfo').show();
+            }
+        });
+        
+        // Remove file
+        $('#removeFile').click(function() {
+            $('#food_image').val('');
+            $('#fileInfo').hide();
+        });
+        
+        // Handle drag and drop
+        $('#uploadArea').on('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).css('border-color', '#17a2b8');
+        });
+        
+        $('#uploadArea').on('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).css('border-color', '#adb5bd');
+        });
+        
+        $('#uploadArea').on('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).css('border-color', '#adb5bd');
+            
+            if (e.originalEvent.dataTransfer.files.length) {
+                $('#food_image')[0].files = e.originalEvent.dataTransfer.files;
+                const file = e.originalEvent.dataTransfer.files[0];
+                $('#fileName').text(file.name);
+                $('#fileInfo').show();
+            }
+        });
+        
+        // Handle form submission
+        $('#predictionForm').submit(function(e) {
+            e.preventDefault();
+            
+            // Check if file is selected
+            if (!$('#food_image').val()) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Please Upload the Image'
+                });
+                return;
+            }
+            
+            // Create FormData object
+            const formData = new FormData(this);
+            
+            // Show loading
+            Swal.fire({
+                title: 'Processing...',
+                text: 'We are analyzing your food image',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // AJAX call to prediction
+            $.ajax({
+                type: 'POST',
+                url: '{% url "prediction" %}',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    Swal.close();
+                    
+                    if (response.status === 'success') {
+                        // Update result section
+                        $('#foodName').text(response.food_name);
+                        $('#calories').text(response.calories + ' kcal');
+                        $('#fat').text(response.fat + ' g');
+                        $('#energy').text(response.energy + ' kJ');
+                        $('#resultImage').attr('src', response.image_url);
+                        $('#resultSection').show();
+                        
+                        // Scroll to result
+                        $('html, body').animate({
+                            scrollTop: $('#resultSection').offset().top - 100
+                        }, 500);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function(error) {
+                    Swal.close();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Something went wrong!'
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

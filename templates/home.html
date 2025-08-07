@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="hero-section" style="background-image: url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1470&q=80');">
+    <div class="overlay"></div>
+    <div class="hero-content container">
+        <h1>FoodImgCalorie</h1>
+        <p>We Predict Calorie From Food Image</p>
+        {% if request.session.user_id %}
+        <a href="{% url 'prediction' %}" class="btn btn-primary btn-lg">Start Prediction</a>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn btn-primary btn-lg">LOGIN</a>
+        <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg ms-3">REGISTER</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-6">
+            <h2>About Our Food Calorie Predictor</h2>
+            <p>Our application uses advanced AI technology to identify food items from images and provide accurate nutritional information including calories, fat content, and energy value. Simply upload an image of your food, and our system will do the rest!</p>
+            <p>Whether you're tracking your daily calorie intake, following a diet plan, or just curious about what you're eating, our tool makes it easy to stay informed about your nutrition.</p>
+        </div>
+        <div class="col-md-6">
+            <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=1470&q=80" class="img-fluid rounded" alt="Food Image">
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12 text-center mb-4">
+            <h2>How It Works</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">1. Upload</h3>
+                    <p class="card-text">Take a photo of your food or upload an existing image.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">2. Analyze</h3>
+                    <p class="card-text">Our AI system identifies the food and calculates nutritional information.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">3. Results</h3>
+                    <p class="card-text">View detailed nutritional information for your food instantly.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
